@@ -6,6 +6,8 @@ A simple tutorial for developing a blockchain application from scratch in Python
 
 Please read the [step-by-step implementation tutorial](https://gist.github.com/satwikkansal/4a857cad2797b9d199547a752933a715) to get your answers :)
 
+[https://recursospython.com/guias-y-manuales/aplicacion-blockchain-desde-cero/](https://recursospython.com/guias-y-manuales/aplicacion-blockchain-desde-cero/)
+
 ## Instructions to run
 
 Clone the project,
