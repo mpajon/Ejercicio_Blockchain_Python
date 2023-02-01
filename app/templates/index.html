@@ -31,11 +31,17 @@
 		<p>Hash anterior {{post.previous_hash}}</p>
 		<p>Indice {{post.index}}</p>
 		<p>Nonce {{post.nonce}}</p>
-		<p>Timestamp: {{post.transaction_timestamp}}</p>
-		<p>Transaction</p>
-		<p>Autor: {{post.author}}</p>
-		<p>Content: {{post.content}}</p>
-		<p>Timestamp {{post.timestamp}}</p>		
+		<p>Timestamp del minado: {{post.timestamp}}</p>
+		<p>Mensajes</p>
+		<ul>
+		{% for transaction in post.transactions %}
+			<li>
+				<p>Autor: {{transaction.author}}</p>
+				<p>Mensaje: {{transaction.content}}</p>
+				<p>Timestamp de la transaccion {{transaction.timestamp}}</p>		
+			</li>
+		{% endfor %}
+		</ul>
 	</div>
 	{% endfor %}
 

@@ -22,16 +22,21 @@ def fetch_posts():
     get_chain_address = "{}/chain".format(CONNECTED_NODE_ADDRESS)
     response = requests.get(get_chain_address)
     if response.status_code == 200:
-        content = []
-        chain = json.loads(response.content)
+        content = []        
+        chain = json.loads(response.content)  
+        print("-------------")
+        print(chain)
+        print("-------------")
         for block in chain["chain"]:
-            for tx in block["transactions"]:
-                tx["index"] = block["index"]
-                tx["previous_hash"] = block["previous_hash"]
-                tx["nonce"] = block["nonce"]
-                tx["hash"] = block["hash"]
-                tx["transaction_timestamp"] = block["timestamp"]
-                content.append(tx)
+            bloque = {}
+            bloque['index'] = block["index"]
+            bloque['transactions'] = block["transactions"]
+            bloque['timestamp'] = block["timestamp"]
+            bloque['previous_hash'] = block["previous_hash"]
+            bloque['hash'] = block["hash"]
+            if 'nonce' in block:
+                bloque['nonce'] = block["nonce"]
+            content.append(bloque)
 
         global posts
         posts = sorted(content, key=lambda k: k['timestamp'],
