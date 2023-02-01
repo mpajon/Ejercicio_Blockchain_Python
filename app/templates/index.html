@@ -6,17 +6,20 @@
 
 	<center>
 	<form action="/submit" id="textform" method="post">
-	    <textarea name="content" rows="4" cols="50" placeholder="Just write whatever you want to..."></textarea>
-	    <br>
-	    <input type="text" name="author" placeholder="Your name">
-	    <input type="submit" value="Post">
+		<input type="text" name="author" placeholder="Nombre">
+		<br>
+		<br>
+	    <textarea name="content" rows="4" cols="50" placeholder="Escribe lo que quieras compartir"></textarea>	    
+		<br>
+		<br>
+	    <input type="submit" value="Enviar">
 	</form>
 	</center>
 
 	<br>
 
-	<a href="{{node_address}}/mine" target="_blank"><button>Request to mine</button></a>
-	<a href="/" ja><button>Resync</button></a>
+	<a href="{{node_address}}/mine" target="_blank"><button>Solicitar Minar</button></a>
+	<a href="/" ja><button>Resincronizar</button></a>
 
 	<div style="margin: 20px;">
 
@@ -24,12 +27,12 @@
 	<hr>
 	<hr>
     <div class="post_box">	
-		<p>Hash {{post.hash}}</p>
-		<p>Previous hash {{post.previous_hash}}</p>
+		<p>Hash del nodo {{post.hash}}</p>
+		<p>Hash anterior {{post.previous_hash}}</p>
 		<p>Indice {{post.index}}</p>
 		<p>Nonce {{post.nonce}}</p>
 		<p>Timestamp: {{post.transaction_timestamp}}</p>
-		<p>Transactions</p>
+		<p>Transaction</p>
 		<p>Autor: {{post.author}}</p>
 		<p>Content: {{post.content}}</p>
 		<p>Timestamp {{post.timestamp}}</p>		
