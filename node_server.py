@@ -181,7 +181,7 @@ def mine_unconfirmed_transactions():
     result = blockchain.mine()
     if not result:
         return "No hay transacciones para minar"
-    return "Block #{} ha sido minado".format(result)
+    return "Se ha realizado el minado de un nuevo bloque con los mensajes pendientes"
 
 
 @app.route('/pending_tx')

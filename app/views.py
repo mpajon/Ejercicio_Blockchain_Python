@@ -24,9 +24,6 @@ def fetch_posts():
     if response.status_code == 200:
         content = []        
         chain = json.loads(response.content)  
-        print("-------------")
-        print(chain)
-        print("-------------")
         for block in chain["chain"]:
             bloque = {}
             bloque['index'] = block["index"]
