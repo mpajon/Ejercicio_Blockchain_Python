@@ -288,6 +288,75 @@ El blockchain que hemos implementado hasta ahora está pensado para ser ejecutad
 - _/register_node_ Para añadir nuevos nodos a la red
 - _/register_with_ Para registrar el nodo actual con el nodo remoto
 
+```python
+# Contiene las direcciones de otros compañeros que participan en la red.
+peers = set()
+
+# Punto de acceso para añadir nuevos compañeros a la red.
+@app.route('/register_node', methods=['POST'])
+def register_new_peers():
+    # La dirección del nodo compañero.
+    node_address = request.get_json()["node_address"]
+    if not node_address:
+        return "Invalid data", 400
+
+    # Añadir el nodo a la lista de compañeros.
+    peers.add(node_address)
+
+    # Retornar el blockhain al nuevo nodo registrado para que pueda sincronizar.
+    return get_chain()
+
+
+@app.route('/register_with', methods=['POST'])
+def register_with_existing_node():
+    """
+    Internamente llama al punto de acceso `/register_node`
+    para registrar el nodo actual con el nodo remoto especificado
+    en la petición, y sincronizar el blockchain asimismo con el
+    nodo remoto. 
+    """
+    node_address = request.get_json()["node_address"]
+    if not node_address:
+        return "Invalid data", 400
+
+    data = {"node_address": request.host_url}
+    headers = {'Content-Type': "application/json"}
+
+    # Hacer una petición para registrarse en el nodo remoto y obtener
+    # información.
+    response = requests.post(node_address + "/register_node",
+                             data=json.dumps(data), headers=headers)
+
+    if response.status_code == 200:
+        global blockchain
+        global peers
+        # Actualizar la cadena y los compañeros.
+        chain_dump = response.json()['chain']
+        blockchain = create_chain_from_dump(chain_dump)
+        peers.update(response.json()['peers'])
+        return "Registration successful", 200
+    else:
+        # si algo sale mal, pasárselo a la respuesta de la API
+        return response.content, response.status_code
+ 
+
+def create_chain_from_dump(chain_dump):
+    blockchain = Blockchain()
+    for idx, block_data in enumerate(chain_dump):
+        block = Block(block_data["index"],
+                      block_data["transactions"],
+                      block_data["timestamp"],
+                      block_data["previous_hash"])
+        proof = block_data['hash']
+        if idx > 0:
+            added = blockchain.add_block(block, proof)
+            if not added:
+                raise Exception("The chain dump is tampered!!")
+        else:  # el bloque es un bloque génesis, no necesita verificación
+            blockchain.chain.append(block)
+    return blockchain
+```
+
 Un nuevo nodo que participe en la red puede invocar la operación _register_with_existing_node_ para registrarse en los nodos existentes en la red. Esto facilitará lo siguiente:
 
 - Solicitarle al nodo remoto que añada un nuevo compañero a su lista de compañeros conocidos.
@@ -301,6 +370,30 @@ Un algoritmo simple de consenso podría ser ponernos de acuerdo respecto de la c
 Por último, tenemos una operación para que cada nodo pueda anunciar a la red que ha minado un bloque para que todos puedan actualizar su blockchain:
 
 - _/add_block_ Para añdir un bloque una vez que ha sido minado a la cadena.
+
+```python
+# punto de acceso para añadir un bloque minado por alguien más a la cadena del nodo.
+@app.route('/add_block', methods=['POST'])
+def validate_and_add_block():
+    block_data = request.get_json()
+    block = Block(block_data["index"], block_data["transactions"],
+                  block_data["timestamp", block_data["previous_hash"]])
+ 
+    proof = block_data['hash']
+    added = blockchain.add_block(block, proof)
+ 
+    if not added:
+        return "The block was discarded by the node", 400
+ 
+    return "Block added to the chain", 201
+
+def announce_new_block(block):
+    for peer in peers:
+        url = "http://{}/add_block".format(peer)
+        requests.post(url, data=json.dumps(block.__dict__, sort_keys=True))
+```
+
+El método announce_new_block debería ser llamado luego de que un bloque ha sido minado por el nodo, para que los compañeros lo puedan añadir a sus cadenas.
 
 ## Paso 8: Ejecutar la aplicación
 
@@ -322,3 +415,11 @@ Con la aplicación arrancada, en una nueva terminal, ejecutamos la interfaz
   $ python run_app.py
 
 La aplicación estará arrancada en [http://localhost:5000](http://localhost:5000)
+
+## Paso 10: Usar la interfaz
+
+##
+
+curl -X POST http://127.0.0.1:8001/register_with -H 'Content-Type: application/json' -d '{"node_address": "http://127.0.0.1:8000"}'
+
+curl -X POST http://127.0.0.1:8002/register_with -H 'Content-Type: application/json' -d '{"node_address": "http://127.0.0.1:8000"}'

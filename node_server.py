@@ -174,7 +174,8 @@ def get_chain():
     for block in blockchain.chain:
         chain_data.append(block.__dict__)
     return json.dumps({"length": len(chain_data),
-                       "chain": chain_data})
+                       "chain": chain_data,
+                       "peers": list(peers)})
 
 @app.route('/mine', methods=['GET'])
 def mine_unconfirmed_transactions():
@@ -247,7 +248,72 @@ def create_chain_from_dump(chain_dump):
     return generated_blockchain
 
 
+# Contiene las direcciones de otros compañeros que participan en la red.
+peers = set()
 
+# Punto de acceso para añadir nuevos compañeros a la red.
+@app.route('/register_node', methods=['POST'])
+def register_new_peers():
+    # La dirección del nodo compañero.
+    node_address = request.get_json()["node_address"]
+    if not node_address:
+        return "Invalid data", 400
+
+    # Añadir el nodo a la lista de compañeros.
+    peers.add(node_address)
+
+    # Retornar el blockhain al nuevo nodo registrado para que pueda sincronizar.
+    return get_chain()
+
+
+@app.route('/register_with', methods=['POST'])
+def register_with_existing_node():
+    """
+    Internamente llama al punto de acceso `/register_node`
+    para registrar el nodo actual con el nodo remoto especificado
+    en la petición, y sincronizar el blockchain asimismo con el
+    nodo remoto. 
+    """
+    node_address = request.get_json()["node_address"]
+    if not node_address:
+        return "Invalid data", 400
+
+    data = {"node_address": request.host_url}
+    headers = {'Content-Type': "application/json"}
+
+    # Hacer una petición para registrarse en el nodo remoto y obtener
+    # información.
+    response = requests.post(node_address + "/register_node",
+                             data=json.dumps(data), headers=headers)
+
+    if response.status_code == 200:
+        global blockchain
+        global peers
+        # Actualizar la cadena y los compañeros.
+        chain_dump = response.json()['chain']
+        blockchain = create_chain_from_dump(chain_dump)
+        peers.update(response.json()['peers'])
+        return "Registration successful ", 200
+    else:
+        # si algo sale mal, pasárselo a la respuesta de la API
+        return response.content, response.status_code
+ 
+
+def create_chain_from_dump(chain_dump):
+    blockchain = Blockchain()
+    for idx, block_data in enumerate(chain_dump):
+        block = Block(block_data["index"],
+                      block_data["transactions"],
+                      block_data["timestamp"],
+                      block_data["previous_hash"])
+        proof = block_data['hash']
+        if idx > 0:
+            added = blockchain.add_block(block, proof)
+            if not added:
+                raise Exception("The chain dump is tampered!!")
+        else:  # el bloque es un bloque génesis, no necesita verificación
+            blockchain.chain.append(block)
+    return blockchain
 
 
 def save_chain():
@@ -285,51 +351,6 @@ else:
 
 
 
-
-# endpoint to add new peers to the network.
-@app.route('/register_node', methods=['POST'])
-def register_new_peers():
-    node_address = request.get_json()["node_address"]
-    if not node_address:
-        return "Invalid data", 400
-
-    # Add the node to the peer list
-    peers.add(node_address)
-
-    # Return the consensus blockchain to the newly registered node
-    # so that he can sync
-    return get_chain()
-
-
-@app.route('/register_with', methods=['POST'])
-def register_with_existing_node():
-    """
-    Internally calls the `register_node` endpoint to
-    register current node with the node specified in the
-    request, and sync the blockchain as well as peer data.
-    """
-    node_address = request.get_json()["node_address"]
-    if not node_address:
-        return "Invalid data", 400
-
-    data = {"node_address": request.host_url}
-    headers = {'Content-Type': "application/json"}
-
-    # Make a request to register with remote node and obtain information
-    response = requests.post(node_address + "/register_node",
-                             data=json.dumps(data), headers=headers)
-
-    if response.status_code == 200:
-        global blockchain
-        global peers
-        # update chain and the peers
-        chain_dump = response.json()['chain']
-        blockchain = create_chain_from_dump(chain_dump)
-        peers.update(response.json()['peers'])
-        return "Registration successful", 200
-    else:
-        # if something goes wrong, pass it on to the API response
-        return response.content, response.status_code
 
 
 # punto de acceso para añadir un bloque minado por alguien más a la cadena del nodo.
