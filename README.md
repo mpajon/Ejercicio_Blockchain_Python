@@ -418,8 +418,35 @@ La aplicación estará arrancada en [http://localhost:5000](http://localhost:500
 
 ## Paso 10: Usar la interfaz
 
-##
+## Paso 11: Agregar nodos a nuestra red
 
-curl -X POST http://127.0.0.1:8001/register_with -H 'Content-Type: application/json' -d '{"node_address": "http://127.0.0.1:8000"}'
+Iniciamos dos nodos de blockchain de tipo servidor en los puertos 8001 y 8002 (además del 8000 que teniamos corriendo antes).
 
-curl -X POST http://127.0.0.1:8002/register_with -H 'Content-Type: application/json' -d '{"node_address": "http://127.0.0.1:8000"}'
+En una ventana de comando nueva, ejecutamos:
+
+    $ export FLASK_APP=node_server.py
+    $ flask run --port 8001
+
+En otra ventana de comando nueva, ejecutamos:
+
+    $ export FLASK_APP=node_server.py
+    $ flask run --port 8002
+
+Le decimos al nodo que está corriendo en el puerto 8000 que registre estos dos nuevos nodos.
+
+En una ventana de comando nueva ejecutamos:
+
+    $ curl -X POST http://127.0.0.1:8001/register_with -H 'Content-Type: application/json' -d '{"node_address": "http://127.0.0.1:8000"}'
+
+    $ curl -X POST http://127.0.0.1:8002/register_with -H 'Content-Type: application/json' -d '{"node_address": "http://127.0.0.1:8000"}'
+
+Esto hará que el nodo en el puerto 8000 esté al tanto de los nodos en los puertos 8001 y 8002 y viceversa. Los nuevos nodos también sincronizarán la cadena con el nodo existente de modo que puedan participar activamente en el proceso de minado.
+
+Para actualizar el nodo con el que la aplicación frontend se sincroniza (que por defecto es localhost:8000), cambia el campo CONNECTED_NODE_ADDRESS en el archivo _views.py_.
+
+Una vez que hagas todo esto, puedes ejecutar la aplicación (python run_app.py), crear transacciones y, una vez que se minen las transacciones, todos los nodos en la red actualizarán la cadena. 
+
+La cadena de nodos puede ser inspeccionada invocando el punto de acceso /chain mediante una llamada del tipo:
+
+    $ curl -X GET http://localhost:8001/chain
+    $ curl -X GET http://localhost:8002/chain

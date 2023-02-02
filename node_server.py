@@ -9,9 +9,8 @@ import time
 from flask import Flask, request
 import requests
 
-
 class Block:
-    def __init__(self, index, transactions, timestamp, previous_hash):
+    def __init__(self, index, transactions, timestamp, previous_hash,nonce=0):
         """
         Constructor de la clase `Block`.
         :param index: ID único del bloque.
@@ -21,9 +20,8 @@ class Block:
         self.index = index
         self.transactions = transactions
         self.timestamp = timestamp
-        # Agregamos un campo para el hash del bloque anterior.
         self.previous_hash = previous_hash
- 
+        self.nonce = nonce
     def compute_hash(self):
         """
         Convierte el bloque en una cadena JSON y luego retorna el hash
@@ -33,7 +31,6 @@ class Block:
         # pues self.__dict__ devuelve todos los campos de la clase.
         block_string = json.dumps(self.__dict__, sort_keys=True)
         return sha256(block_string.encode()).hexdigest()
-
 
 class Blockchain:
     # Dificultad del algoritmo de prueba de trabajo.
@@ -52,7 +49,8 @@ class Blockchain:
         cadena. El bloque tiene index 0, previous_hash 0 y un hash
         válido.
         """
-        genesis_block = Block(0, [], time.time(), "0")
+        genesis_block = Block(0, [], 0, "0")
+        #genesis_block = Block(0, [], 0, "0")
         genesis_block.hash = genesis_block.compute_hash()
         self.chain.append(genesis_block)
 
@@ -64,8 +62,9 @@ class Blockchain:
         el bloque génesis).
         """
         return self.chain[-1]
-    
-    def proof_of_work(self, block):
+
+    @staticmethod
+    def proof_of_work(block):
         """
         Función que intenta distintos valores de nonce hasta obtener
         un hash que satisfaga nuestro criterio de dificultad.
@@ -88,17 +87,17 @@ class Blockchain:
           bloque de la cadena.
         """
         previous_hash = self.last_block.hash
- 
+        
         if previous_hash != block.previous_hash:
             return False
- 
+        
         if not self.is_valid_proof(block, proof):
             return False
- 
+        
         block.hash = proof
         self.chain.append(block)
-        return True
- 
+        
+    @classmethod
     def is_valid_proof(self, block, block_hash):
         """
         Chquear si block_hash es un hash válido y satisface nuestro
@@ -116,8 +115,6 @@ class Blockchain:
         pendientes al blockchain añadiéndolas al bloque y calculando la
         prueba de trabajo.
         """
-        numero = len(self.unconfirmed_transactions)
-
         if not self.unconfirmed_transactions:
             return False
             
@@ -128,31 +125,39 @@ class Blockchain:
                       previous_hash=last_block.hash)
         proof = self.proof_of_work(new_block)
         self.add_block(new_block, proof)
-
-            
+    
         self.unconfirmed_transactions = []
-        return numero
+        return True
 
+    @classmethod
+    def check_chain_validity(cls, chain):
+        result = True
+        previous_hash = "0"
+
+        for block in chain:
+            block_hash = block.hash
+            # remove the hash field to recompute the hash again
+            # using `compute_hash` method.
+            delattr(block, "hash")
+
+            if not cls.is_valid_proof(block, block_hash) or \
+                    previous_hash != block.previous_hash:
+                result = False
+                break
+
+            block.hash, previous_hash = block_hash, block_hash
+
+        return result
 
 # Inicializar la aplicación Flask
 app =  Flask(__name__)
  
 # Inicializar el objeto blockchain.
-blockchain = Blockchain()
-
-# the address to other participating members of the network
+blockchain = None
 peers = set()
-
-# Nodo de la red blockchain con el que nuestra aplicación
-# se comunicará para obtener y enviar información
-CONNECTED_NODE_ADDRESS = "http://127.0.0.1:8000"
- 
-posts = []
 
 chain_file_name = os.environ.get('DATA_FILE')
 
-
-# El método de Flask para declarar puntos de acceso.
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
     tx_data = request.get_json()
@@ -160,7 +165,7 @@ def new_transaction():
  
     for field in required_fields:
         if not tx_data.get(field):
-            return "Invlaid transaction data", 404
+            return "Invalid transaction data", 404
  
     tx_data["timestamp"] = time.time()
  
@@ -182,74 +187,18 @@ def mine_unconfirmed_transactions():
     result = blockchain.mine()
     if not result:
         return "No hay transacciones para minar"
-    return "Se ha realizado el minado de un nuevo bloque con los mensajes pendientes"
-
+    else:
+        # Making sure we have the longest chain before announcing to the network
+        chain_length = len(blockchain.chain)
+        consensus()
+        if chain_length == len(blockchain.chain):
+            # announce the recently mined block to the network
+            announce_new_block(blockchain.last_block)
+        return "Se ha realizado el minado de un nuevo bloque con los mensajes pendientes"
 
 @app.route('/pending_tx')
 def get_pending_tx():
     return json.dumps(blockchain.unconfirmed_transactions)
-
-@app.route('/submit', methods=['POST'])
-def submit_textarea():
-    """
-    Punto de acceso para crear una nueva transacción vía nuestra
-    aplicación.
-    """
-    post_content = request.form["content"]
-    author = request.form["author"]
-    
-    post_object = {
-        'author': author,
-        'content': post_content,
-    }
-    
-    # Submit a transaction
-    new_tx_address = "{}/new_transaction".format(CONNECTED_NODE_ADDRESS)
-    
-    requests.post(new_tx_address,
-                    json=post_object,
-                    headers={'Content-type': 'application/json'})
-    
-    return redirect('/')
-
-def fetch_posts():
-    """
-    Función para obtener la cadena desde un nodo blockchain,
-    procesar la información y almacenarla localmente.
-    """
-    get_chain_address = "{}/chain".format(CONNECTED_NODE_ADDRESS)
-    response = requests.get(get_chain_address)
-    if response.status_code == 200:
-        content = []
-        chain = json.loads(response.content)
-        for block in chain["chain"]:
-            for tx in block["transactions"]:
-                tx["index"] = block["index"]
-                tx["hash"] = block["previous_hash"]
-                content.append(tx)
-    
-        global posts
-        posts = sorted(content, key=lambda k: k['timestamp'],
-                        reverse=True)
-
-
-def create_chain_from_dump(chain_dump):
-    generated_blockchain = Blockchain()
-    for idx, block_data in enumerate(chain_dump):
-        if idx == 0:
-            continue  # skip genesis block
-        block = Block(block_data["index"],
-                      block_data["transactions"],
-                      block_data["timestamp"],
-                      block_data["previous_hash"],
-                      block_data["nonce"])
-        proof = block_data['hash']
-        generated_blockchain.add_block(block, proof)
-    return generated_blockchain
-
-
-# Contiene las direcciones de otros compañeros que participan en la red.
-peers = set()
 
 # Punto de acceso para añadir nuevos compañeros a la red.
 @app.route('/register_node', methods=['POST'])
@@ -264,7 +213,6 @@ def register_new_peers():
 
     # Retornar el blockhain al nuevo nodo registrado para que pueda sincronizar.
     return get_chain()
-
 
 @app.route('/register_with', methods=['POST'])
 def register_with_existing_node():
@@ -297,39 +245,85 @@ def register_with_existing_node():
     else:
         # si algo sale mal, pasárselo a la respuesta de la API
         return response.content, response.status_code
+
+# punto de acceso para añadir un bloque minado por alguien más a la cadena del nodo.
+@app.route('/add_block', methods=['POST'])
+def verify_and_add_block():
+    block_data = request.get_json()
+    block = Block(block_data["index"],
+                  block_data["transactions"],
+                  block_data["timestamp"],
+                  block_data["previous_hash"],
+                  block_data["nonce"])
  
+    proof = block_data['hash']
+    try:
+        blockchain.add_block(block, proof)
+    except ValueError as e:
+        return "El bloque ha sido descartado por el nodo: " + e.str(), 400
+ 
+    return "Block added to the chain", 201
 
 def create_chain_from_dump(chain_dump):
-    blockchain = Blockchain()
+    generated_blockchain = Blockchain()
     for idx, block_data in enumerate(chain_dump):
+        if idx == 0:
+            continue  # skip genesis block
         block = Block(block_data["index"],
                       block_data["transactions"],
                       block_data["timestamp"],
-                      block_data["previous_hash"])
+                      block_data["previous_hash"],
+                      block_data["nonce"])
         proof = block_data['hash']
-        if idx > 0:
-            added = blockchain.add_block(block, proof)
-            if not added:
-                raise Exception("The chain dump is tampered!!")
-        else:  # el bloque es un bloque génesis, no necesita verificación
-            blockchain.chain.append(block)
-    return blockchain
-
+        generated_blockchain.add_block(block, proof)
+    return generated_blockchain
 
 def save_chain():
     if chain_file_name is not None:
         with open(chain_file_name, 'w') as chain_file:
             chain_file.write(get_chain())
 
-
 def exit_from_signal(signum, stack_frame):
     sys.exit(0)
 
+def announce_new_block(block):
+    for peer in peers:
+        url = "{}add_block".format(peer)
+        headers = {'Content-Type': "application/json"}
+        requests.post(url,
+                      data=json.dumps(block.__dict__, sort_keys=True),
+                      headers=headers)
+
+def consensus():
+    """
+    Nuestro simple algoritmo de consenso. Si una cadena válida más larga es
+    encontrada, la nuestra es reemplazada por ella.
+    """
+    global blockchain
+ 
+    longest_chain = None
+    current_len = len(blockchain.chain)
+ 
+    for node in peers:
+        response = requests.get('{}chain'.format(node))
+        length = response.json()['length']
+        chain = response.json()['chain']
+        if length > current_len and blockchain.check_chain_validity(chain):
+            current_len = length
+            longest_chain = chain
+ 
+    if longest_chain:
+        blockchain = longest_chain
+        return True
+ 
+    return False
+
+# Uncomment this line if you want to specify the port number in the code
+#app.run(debug=True, port=8000)
 
 atexit.register(save_chain)
 signal.signal(signal.SIGTERM, exit_from_signal)
 signal.signal(signal.SIGINT, exit_from_signal)
-
 
 if chain_file_name is None:
     data = None
@@ -347,57 +341,3 @@ if data is None:
 else:
     blockchain = create_chain_from_dump(data['chain'])
     peers.update(data['peers'])
-
-
-
-
-
-
-# punto de acceso para añadir un bloque minado por alguien más a la cadena del nodo.
-@app.route('/add_block', methods=['POST'])
-def validate_and_add_block():
-    block_data = request.get_json()
-    block = Block(block_data["index"], block_data["transactions"],
-                  block_data["timestamp", block_data["previous_hash"]])
- 
-    proof = block_data['hash']
-    added = blockchain.add_block(block, proof)
- 
-    if not added:
-        return "The block was discarded by the node", 400
- 
-    return "Block added to the chain", 201
-
-def announce_new_block(block):
-    for peer in peers:
-        url = "http://{}/add_block".format(peer)
-        requests.post(url, data=json.dumps(block.__dict__, sort_keys=True))
-
-def consensus():
-    """
-    Nuestro simple algoritmo de consenso. Si una cadena válida más larga es
-    encontrada, la nuestra es reemplazada por ella.
-    """
-    global blockchain
- 
-    longest_chain = None
-    current_len = len(blockchain)
- 
-    for node in peers:
-        response = requests.get('http://{}/chain'.format(node))
-        length = response.json()['length']
-        chain = response.json()['chain']
-        if length > current_len and blockchain.check_chain_validity(chain):
-            current_len = length
-            longest_chain = chain
- 
-    if longest_chain:
-        blockchain = longest_chain
-        return True
- 
-    return False
-
-
-
-# Uncomment this line if you want to specify the port number in the code
-#app.run(debug=True, port=8000)
