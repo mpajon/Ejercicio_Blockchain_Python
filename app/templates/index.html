@@ -27,18 +27,18 @@
 	<hr>
 	<hr>
     <div class="post_box">	
-		<p>Hash del nodo {{post.hash}}</p>
-		<p>Hash anterior {{post.previous_hash}}</p>
-		<p>Indice {{post.index}}</p>
-		<p>Nonce {{post.nonce}}</p>
-		<p>Timestamp del minado: {{post.timestamp}}</p>
-		<p>Mensajes</p>
+		<p>Hash del nodo: {{post.hash}}</p>
+		<p>Hash anterior: {{post.previous_hash}}</p>
+		<p>Indice: {{post.index}}</p>
+		<p>Nonce: {{post.nonce}}</p>
+		<p>Timestamp del minado: {{readable_time(post.timestamp)}}</p>
+		<p>Mensajes:</p>
 		<ul>
 		{% for transaction in post.transactions %}
 			<li>
 				<p>Autor: {{transaction.author}}</p>
 				<p>Mensaje: {{transaction.content}}</p>
-				<p>Timestamp de la transaccion {{transaction.timestamp}}</p>		
+				<p>Timestamp de la transaccion: {{readable_time(transaction.timestamp)}}</p>		
 			</li>
 		{% endfor %}
 		</ul>
