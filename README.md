@@ -2,11 +2,20 @@
 
 Vamos a construir un sitio web simple que permita a los usuarios compartir información mediante el uso de una blockchain que será inmutable y permanente. Además, los usuarios podrán interactuar con la aplicación a través de una sencilla interfaz web.
 
+![](./screenshots/prev.png)
+
 La estructura de la información que almacenaremos en la blockchain. La publicación tendrá tres partes:
 
 1. Contenido.
 2. Autor.
 3. Fecha de publicación.
+
+## Stack tecnológico
+
+- [Visual Studio Code](https://code.visualstudio.com/), como IDE para desarrollar la solución.
+- [Python](https://www.python.org/downloads/), como lenguaje de programación.
+- [Flask](https://flask.palletsprojects.com/en/2.2.x/), como framework para crear una aplicación web sobre Python.
+- [Pip](https://pypi.org/project/pip/), como gestor de paquetes de Python.
 
 ## Paso 1: Almacenar transacciones en bloque
 

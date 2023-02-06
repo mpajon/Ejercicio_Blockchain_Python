@@ -8,7 +8,7 @@ from app import app
 
 # Nodo de la red blockchain con el que nuestra aplicación
 # se comunicará para obtener y enviar información
-CONNECTED_NODE_ADDRESS = "http://127.0.0.1:8001"
+CONNECTED_NODE_ADDRESS = "http://127.0.0.1:8000"
 
 posts = []
 
