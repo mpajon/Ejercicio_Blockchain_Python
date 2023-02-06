@@ -4,7 +4,7 @@ Vamos a construir un sitio web simple que permita a los usuarios compartir infor
 
 ![](./screenshots/prev.png)
 
-La estructura de la información que almacenaremos en la blockchain. La publicación tendrá tres partes:
+La estructura de la información que almacenaremos en la blockchain serán bloque que constarán de tres partes:
 
 1. Contenido.
 2. Autor.
@@ -29,9 +29,9 @@ Usaremos un formato JSON para almacenar la siguiente información:
 }
 ```
 
-Lo anterior definirá una _**transacción**_
+Lo anterior definirá una _**transacción**_.
 
-Las transacciones están empaquetadas en bloques. Un bloque puede contener una o mas transacciones. Los bloques que contienen las transacciones son generados con frecuencia y añadidos al blockchain. Dado que puede haber muchos bloques cada uno debe tener un identificador único
+Las transacciones están empaquetadas en bloques. Un bloque puede contener una o mas transacciones. Los bloques que contienen las transacciones son generados con frecuencia y añadidos al blockchain. Dado que puede haber muchos bloques cada uno debe tener un identificador único.
 
 ```python
 class Block:
@@ -64,7 +64,7 @@ Las consecuencias de esto son:
 - Es imposible adivinar la información de entrada a partir del hash de salida (la única forma es probar todas las combinaciones de información de entrada posibles).
 - Si se conoce tanto la información de entrada como el hash, simplemente se puede pasar la información de entrada por la función hash para verificar el hash en cuestión.
 
-_Blockchain_ saca provecho la asimetría entre los esfuerzos requeridos para averiguar el hash desde una información de entrada (algo muy fácil) y aquellos para averiguar la información de entrada a partir de un _hash_ (casi imposible) para obtener las características deseadas.
+_Blockchain_ saca provecho de la asimetría entre los esfuerzos requeridos para averiguar el hash de una información de entrada (algo muy fácil) y aquellos para averiguar la información de entrada a partir de un _hash_ (casi imposible) para obtener las características deseadas.
 
 Vamos a guardar el hash de cada uno de los bloques en un campo dentro de nuestro objeto _**Block**_ para que actúe como una huella dactilar digital (o firma digital) de la información que contiene:
 
@@ -91,7 +91,7 @@ Ya tenemos montados los bloques. El blockchain ha de ser una colección de bloqu
 
 Necesitamos una solución para asegurarnos de que cualquier cambio en los bloques anteriores invalide la cadena entera. La forma de resolver esto es creando una dependencia mutua entre bloques consecutivos al encadenarlos por el hash del bloque inmediatamente anterior a ellos. Es decir, se trata de incluir el hash del bloque anterior en el actual, a través de un nuevo campo llamado _previous_hash_.
 
-Si cada bloque está enlazado al anterior por el campo previous_hash, ¿Qué sucede con el primer bloque de todos? El primer bloque es llamado el _bloque génesis_ y puede ser generado manualmente o por alguna lógica única. Agreguemos el campo _previous_hash_ a la clase _**Block**_ e implementemos la estructura inicial de nuestra clase Blockchain:
+Si cada bloque está enlazado al anterior por el campo _previous_hash_, ¿Qué sucede con el primer bloque de todos? El primer bloque es llamado el _bloque génesis_ y puede ser generado manualmente o por alguna lógica única. Agreguemos el campo _previous_hash_ a la clase _**Block**_ e implementemos la estructura inicial de nuestra clase Blockchain:
 
 ```python
 from hashlib import sha256
@@ -156,7 +156,7 @@ class Blockchain:
         return self.chain[-1]
 ```
 
-Ahora si el contenido de cualquiera de los bloques anteriores cambia:
+Ahora, si el contenido de cualquiera de los bloques anteriores cambia:
 
  - El hash del bloque anterior cambiará.
  - Esto provocará una discordancia con el campo _previous_hash_ en el bloque siguiente.
