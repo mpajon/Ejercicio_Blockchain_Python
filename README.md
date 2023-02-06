@@ -574,7 +574,7 @@ def verify_and_add_block():
     return "Block added to the chain", 201
 ```
 
-El método announce_new_block debería ser llamado después de que un bloque ha sido minado por el nodo, para que todos los nodos de la red lo puedan añadir a sus cadenas.
+El método announce_new_block debería ser llamado después de que un bloque ha sido minado por el nodo, para que todos los nodos de la red lo puedan añadir a sus cadenas:
 
 ```python
 def announce_new_block(block):
@@ -696,7 +696,7 @@ Podemos ver que ambos nodos (8000 y 8001) se ha añadido el nuevo bloque a la ca
 
 ![](./screenshots/blockchain07.png)
 
-Si el nodo que corre en el puerto 8000 se cae o desaparece, podriamos usar el del 8001. Para comprobarlo, tenemos que cambiar el nodo con el que la aplicación frontend se sincroniza para minar (que por defecto es localhost:8000). Para ello, podemos parar la aplicación, cambiar el campo CONNECTED_NODE_ADDRESS en el archivo _views.py_ y hacer que use el nodo del 8001.
+Si el nodo que corre en el puerto 8000 se cae o desaparece, podriamos usar el del 8001. Para comprobarlo, tenemos que cambiar el nodo con el que la aplicación frontend se sincroniza para minar (que por defecto es localhost:8000). Para ello, podemos parar la aplicación, cambiar el campo CONNECTED_NODE_ADDRESS en el archivo _views.py_ y hacer que use el nodo del 8001:
 
 ```js
 # Nodo de la red blockchain con el que nuestra aplicación
@@ -704,11 +704,10 @@ Si el nodo que corre en el puerto 8000 se cae o desaparece, podriamos usar el de
 CONNECTED_NODE_ADDRESS = "http://127.0.0.1:8001"
 ```
 
-Una vez que hagas todo esto, podemos ejecutar de nuevo  
-la aplicación:
+Una vez que hagas todo esto, podemos ejecutar de nuevo la aplicación:
 
     $ python run_app.py
     
-Y se usara el nodo que está corriendo en el puerto 8001 para continuar añadiendo bloques a la blockchain.
+Y se usará el nodo que está corriendo en el puerto 8001 para continuar añadiendo bloques a la blockchain.
 
 ![](./screenshots/blockchain08.png)
