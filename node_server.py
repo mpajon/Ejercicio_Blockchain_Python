@@ -50,7 +50,6 @@ class Blockchain:
         válido.
         """
         genesis_block = Block(0, [], 0, "0")
-        #genesis_block = Block(0, [], 0, "0")
         genesis_block.hash = genesis_block.compute_hash()
         self.chain.append(genesis_block)
 
@@ -100,7 +99,7 @@ class Blockchain:
     @classmethod
     def is_valid_proof(self, block, block_hash):
         """
-        Chquear si block_hash es un hash válido y satisface nuestro
+        Conmprobar si block_hash es un hash válido y satisface nuestro
         criterio de dificultad.
         """
         return (block_hash.startswith('0' * Blockchain.difficulty) and

@@ -8,7 +8,7 @@ from app import app
 
 # Nodo de la red blockchain con el que nuestra aplicación
 # se comunicará para obtener y enviar información
-CONNECTED_NODE_ADDRESS = "http://127.0.0.1:8000"
+CONNECTED_NODE_ADDRESS = "http://127.0.0.1:8001"
 
 posts = []
 
@@ -75,4 +75,4 @@ def submit_textarea():
 
 
 def timestamp_to_string(epoch_time):
-    return datetime.datetime.fromtimestamp(epoch_time).strftime('%m/%d/%Y, %H:%M:%S')
+    return datetime.datetime.fromtimestamp(epoch_time).strftime('%d/%m/%Y, %H:%M:%S')
