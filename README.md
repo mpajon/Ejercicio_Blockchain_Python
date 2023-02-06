@@ -603,13 +603,17 @@ Instalamos las dependencias
 
 Iniciamos un nodo para nuestro blockchain:
 
-  Unix
-  $ export FLASK_APP=node_server.py
+Unix
 
-  Windows
-  $ set FLASK_APP=node_server.py
+    $ export FLASK_APP=node_server.py
 
-  $ flask run --port 8000
+Windows
+
+    $ set FLASK_APP=node_server.py
+
+En Ambos:
+
+    $ flask run --port 8000
 
 ![](./screenshots/blockchain01.png)
 
@@ -672,12 +676,16 @@ Si solo tenemos un nodo levantado (el que está en el puerto 8000), dependemos d
 
 En una nueva ventana de comando, ejecutamos:
 
-    Unix
+Unix
+
     $ export FLASK_APP=node_server.py
 
-    Windows
+Windows
+    
     $ set FLASK_APP=node_server.py
 
+Ambos
+    
     $ flask run --port 8001
 
   ![](./screenshots/blockchain03.png)
@@ -688,10 +696,13 @@ En este nodo, tendremos un único bloque genesis, pero no tiene noticias de los 
   
 Tenemos que decirle al nodo que está corriendo en el puerto 8000 que registre este nuevo nodo. Para ello, en una nueva ventana de comando, ejecutamos:
 
-    Unix
+Unix
+
     $ curl -X POST http://127.0.0.1:8001/register_with -H 'Content-Type: application/json' -d '{"node_address": "http://127.0.0.1:8000"}'
 
-    Windows
+
+Windows
+
     $ curl -X POST http://127.0.0.1:8001/register_with -H "Content-Type: application/json" -d "{\"node_address\": \"http://127.0.0.1:8000\"}"
 
   ![](./screenshots/blockchain05.png)
