@@ -603,8 +603,17 @@ Instalamos las dependencias
 
 Iniciamos un nodo para nuestro blockchain:
 
-  $ export FLASK_APP=node_server.py
-  $ flask run --port 8000
+Unix
+
+    $ export FLASK_APP=node_server.py
+
+Windows
+
+    $ set FLASK_APP=node_server.py
+
+En Ambos:
+
+    $ flask run --port 8000
 
 ![](./screenshots/blockchain01.png)
 
@@ -667,7 +676,16 @@ Si solo tenemos un nodo levantado (el que está en el puerto 8000), dependemos d
 
 En una nueva ventana de comando, ejecutamos:
 
+Unix
+
     $ export FLASK_APP=node_server.py
+
+Windows
+    
+    $ set FLASK_APP=node_server.py
+
+Ambos
+    
     $ flask run --port 8001
 
   ![](./screenshots/blockchain03.png)
@@ -678,7 +696,14 @@ En este nodo, tendremos un único bloque genesis, pero no tiene noticias de los 
   
 Tenemos que decirle al nodo que está corriendo en el puerto 8000 que registre este nuevo nodo. Para ello, en una nueva ventana de comando, ejecutamos:
 
+Unix
+
     $ curl -X POST http://127.0.0.1:8001/register_with -H 'Content-Type: application/json' -d '{"node_address": "http://127.0.0.1:8000"}'
+
+
+Windows
+
+    $ curl -X POST http://127.0.0.1:8001/register_with -H "Content-Type: application/json" -d "{\"node_address\": \"http://127.0.0.1:8000\"}"
 
   ![](./screenshots/blockchain05.png)
 
@@ -701,6 +726,7 @@ Y realizamos el minado:
 Podemos ver que ambos nodos (8000 y 8001) se ha añadido el nuevo bloque a la cadena:
 
     $ curl -X GET http://localhost:8000/chain
+    
     $ curl -X GET http://localhost:8001/chain
 
 ![](./screenshots/blockchain07.png)
